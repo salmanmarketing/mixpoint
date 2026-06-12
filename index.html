@@ -320,12 +320,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
       </div>
       <!-- Sandooq -->
       <div class="sandooq-grid" id="sq-grid"></div>
-      <!-- Carried balance -->
-      <div class="carried-row">
-        <label>💰 رصيد مرحّل من الشهر السابق:</label>
-        <input type="number" id="carried-inp" placeholder="0" oninput="saveCarried()">
-        <span class="cr-note" id="carried-note"></span>
-      </div>
+
       <div class="kpi-grid" id="dash-kpis"></div>
       <div class="charts-row c2">
         <div class="cc"><div class="cc-head"><div><div class="cc-title">المبيعات اليومية</div><div class="cc-sub">كاش وشبكة</div></div></div><div class="cw"><canvas id="ch1"></canvas></div></div>
@@ -359,6 +354,12 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
         <button class="btn btn-outline btn-sm" onclick="exportExcel()">📥 Excel</button>
         <button class="btn btn-orange btn-sm" onclick="exportPDF()">📄 PDF</button>
       </div>
+      <!-- رصيد مرحّل -->
+      <div class="carried-row">
+        <label>💰 رصيد مرحّل من الشهر السابق:</label>
+        <input type="number" id="carried-inp" placeholder="0" oninput="saveCarried()">
+        <span class="cr-note" id="carried-note"></span>
+      </div>
       <div class="kpi-grid" id="k-kpis"></div>
       <div class="sc"><div class="sh sh-orange">📈 الإيرادات</div>
         <table class="dt"><tbody>
@@ -383,7 +384,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
           <tr class="tr-sub"><td>إجمالي الإيرادات</td><td id="kn-rev">0 ريال</td></tr>
           <tr class="tr-dan"><td>إجمالي المصروفات</td><td id="kn-exp">0 ريال</td></tr>
           <tr><td>رصيد مرحّل</td><td id="kn-carried">0 ريال</td></tr>
-          <tr class="tr-tot"><td style="font-size:.92rem;font-weight:900">✨ صافي الربح</td><td id="kn-profit" style="font-size:.92rem;font-weight:900">0 ريال</td></tr>
+          <tr class="tr-tot"><td style="font-size:.92rem;font-weight:900">🏁 الرصيد الختامي</td><td id="kn-profit" style="font-size:.92rem;font-weight:900">0 ريال</td></tr>
         </tbody></table>
       </div>
     </div>
@@ -551,10 +552,10 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
 
 <script>
 // ══════════ DATA ══════════
-const INIT_DATA = {"daily":{"2026-06-05":{"cash":465,"net":428.5,"exp":[{"note":"ابو اسامه","amount":"15"},{"note":"3 جركل مويه","amount":"6"},{"note":"غداء","amount":"27"},{"note":"مويه ابو نص","amount":"3"},{"note":"البقاله ","amount":"118.5"}]},"2026-06-04":{"cash":515,"net":358,"exp":[{"note":"مع التكسي يوم الخميس","amount":"35"},{"note":"مشروبات غازيه","amount":"15"}]},"2026-06-03":{"cash":485,"net":547,"exp":[{"note":"عهده","amount":"100"},{"note":"مشروبات غازيه ","amount":"22"},{"note":"ابو اسامه","amount":"22"},{"note":"برميل قمامه ","amount":"18"}]},"2026-06-06":{"cash":655,"net":774,"exp":[{"note":"صامولي","amount":"3"},{"note":"ابو اسامه","amount":"10"}]},"2026-06-07":{"cash":385,"net":452,"exp":[{"note":"خبز","amount":"4"},{"note":"غداء للعمال يومين ","amount":"53"},{"note":"طبق بيض","amount":"19"},{"note":"مشتريات من البقاله ","amount":"90.5"}]},"2026-06-08":{"cash":405,"net":627.5,"exp":[{"note":"مسامير للشاشة","amount":"2"},{"note":"عيش برجر ","amount":"8"},{"note":"لحم مفروم +دجاج 2 كيلو","amount":"120"},{"note":"خبز ترتيلا","amount":"40"},{"note":"نسكافيه + شوك ","amount":"11.5"},{"note":"صامولي + خبز","amount":"2"},{"note":"ملح + حليب + بيض+ خبز","amount":"57.5"}]}},"sal":{"2026-06":[{"name":"سليمان الجابري","salary":"","draws":[]},{"name":"عمر","salary":"","draws":[]},{"name":"الحاج ابو رفيق","salary":"","draws":[{"amount":"16","date":"","note":"خطأ بالسحب للعميل"}]}]},"purch":{"2026-06":[{"amount":"62.10","date":"2026/06/07","inv":"14435","note":"فاتورة مشتريات شركة المنجم"},{"amount":"200","date":"2026/06/03","inv":"","note":"بالونات وزينه للافتتاح"},{"amount":"8","date":"2026/06/03","inv":"","note":"دباسه ورق للمحل"},{"amount":"13","date":"2026/06/03","inv":"","note":"شاي الكبوس"},{"amount":"50","date":"2026/06/03","inv":"","note":"ابو اسامه (توزيع الاستيكرات)"},{"amount":"242","date":"2026/06/04","inv":"","note":"كودو خبز همرجر"},{"amount":"571","date":"2026/06/04","inv":"","note":"فاتورة مشتريات عجوه الخليج + التوصيل"},{"amount":"298.51","date":"2026/06/07","inv":"28905","note":"فاتورة مشتريات بن خميس"},{"amount":"413","date":"2026/06/08","inv":"","note":"فاتورة مشتريات بن خميس + 85 خضار + توصيل"},{"amount":"130","date":"2026/06/07","inv":"","note":"فواكة (برتقال + منجا + مواصلات)"},{"amount":"178.5","date":"2026/06/06","inv":"","note":"شركة عجوه الخليج (جبن مزريلا + كودو)"},{"amount":"143","date":"2026/06/06","inv":"","note":"شركة محمود خلف العثمان (زنجر دجاج)"},{"amount":"224","date":"2026/06/09","inv":"","note":"فاتورة مشتريات (كودو)"}]}};
+const INIT_DATA = {"daily": {"2026-06-05": {"cash": 465, "net": 428.5, "exp": [{"note": "ابو اسامه", "amount": "15"}, {"note": "3 جركل مويه", "amount": "6"}, {"note": "غداء", "amount": "27"}, {"note": "مويه ابو نص", "amount": "3"}, {"note": "البقاله ", "amount": "118.5"}]}, "2026-06-04": {"cash": 515, "net": 358, "exp": [{"note": "مع التكسي يوم الخميس", "amount": "35"}, {"note": "مشروبات غازيه", "amount": "15"}]}, "2026-06-03": {"cash": 485, "net": 547, "exp": [{"note": "عهده", "amount": "100"}, {"note": "مشروبات غازيه ", "amount": "22"}, {"note": "ابو اسامه", "amount": "22"}, {"note": "برميل قمامه ", "amount": "18"}]}, "2026-06-06": {"cash": 655, "net": 774, "exp": [{"note": "صامولي", "amount": "3"}, {"note": "ابو اسامه", "amount": "10"}]}, "2026-06-07": {"cash": 385, "net": 452, "exp": [{"note": "خبز", "amount": "4"}, {"note": "غداء للعمال يومين ", "amount": "53"}, {"note": "طبق بيض", "amount": "19"}, {"note": "مشتريات من البقاله ", "amount": "90.5"}]}, "2026-06-08": {"cash": 405, "net": 627.5, "exp": [{"note": "مسامير للشاشة", "amount": "2"}, {"note": "عيش برجر ", "amount": "8"}, {"note": "لحم مفروم +دجاج 2 كيلو", "amount": "120"}, {"note": "خبز ترتيلا", "amount": "40"}, {"note": "نسكافيه + شوك ", "amount": "11.5"}, {"note": "صامولي + خبز", "amount": "2"}, {"note": "ملح + حليب + بيض+ خبز", "amount": "57.5"}]}, "2026-06-09": {"cash": 683, "net": 374.5, "exp": [{"note": "خبز + مويه", "amount": "4"}, {"note": "مشتريات من البقاله", "amount": "42.5"}]}, "2026-06-10": {"cash": 470, "net": 711.5, "exp": [{"note": "بيض", "amount": "67"}, {"note": "دفعه من الحساب مشارف الامل (فاتورة بطاطس +دجاج)", "amount": "50"}, {"note": "صامولي + خبز", "amount": "5"}, {"note": "مويه جراكل 3دبات", "amount": "6"}, {"note": "3 بيبسي دايت + 3 حمضيات", "amount": "13.5"}, {"note": "ثلج+ شاي من البقالة", "amount": "25"}, {"note": "أفكادو + قصدير + موز + خضار", "amount": "111"}, {"note": "ابو احمد 30ريال ", "amount": ""}]}, "2026-06-11": {"cash": 492, "net": 892.5, "exp": [{"note": "فاتورة برجر + ورقيات", "amount": "27"}, {"note": "فلفل رومي", "amount": "8"}, {"note": "2 كرتون مويه + خبز + صامولي من البقاله ", "amount": "30"}, {"note": "( ابو احمد 24) (اخ ابو احمد مع بلال32)", "amount": ""}]}}, "sal": {"2026-06": [{"name": "سليمان الجابري", "salary": "", "draws": []}, {"name": "عمر", "salary": "", "draws": []}, {"name": "الحاج ابو رفيق", "salary": "", "draws": [{"amount": "16", "date": "", "note": "خطأ بالسحب للعميل"}]}]}, "purch": {"2026-06": [{"amount": "62.10", "date": "2026/06/07", "inv": "14435", "note": "فاتورة مشتريات شركة المنجم"}, {"amount": "200", "date": "2026/06/03", "inv": "", "note": "بالونات وزينه للافتتاح"}, {"amount": "8", "date": "2026/06/03", "inv": "", "note": "دباسه ورق للمحل"}, {"amount": "13", "date": "2026/06/03", "inv": "", "note": "شاي الكبوس"}, {"amount": "50", "date": "2026/06/03", "inv": "", "note": "ابو اسامه (توزيع الاستيكرات)"}, {"amount": "242", "date": "2026/06/04", "inv": "", "note": "كودو خبز همرجر"}, {"amount": "571", "date": "2026/06/04", "inv": "", "note": "فاتورة مشتريات عجوه الخليج + التوصيل"}, {"amount": "298.51", "date": "2026/06/07", "inv": "28905", "note": "فاتورة مشتريات بن خميس"}, {"amount": "413", "date": "2026/06/08", "inv": "", "note": "فاتورة مشتريات بن خميس + 85 خضار + توصيل"}, {"amount": "130", "date": "2026/06/07", "inv": "", "note": "فواكة (برتقال + منجا + مواصلات)"}, {"amount": "178.5", "date": "2026/06/06", "inv": "", "note": "شركة عجوه الخليج (جبن مزريلا + كودو)"}, {"amount": "143", "date": "2026/06/06", "inv": "", "note": "شركة محمود خلف العثمان (زنجر دجاج)"}, {"amount": "224", "date": "2026/06/09", "inv": "", "note": "فاتورة مشتريات (كودو)"}, {"amount": "63", "date": "2026/06/09", "inv": "", "note": "العوبثاني بلاستيك"}, {"amount": "30", "date": "2026/06/09", "inv": "", "note": "توصيل يوم الثلاثاء"}, {"amount": "448", "date": "2026/06/09", "inv": "", "note": "شركة عجوة الخليج(زيت + برجر + جبن مزريلا +جبن)"}, {"amount": "50", "date": "2026/06/09", "inv": "", "note": "صحون بيتزاء"}, {"amount": "14", "date": "2026/06/09", "inv": "", "note": "قفازات شركة بن خميس"}, {"amount": "303.5", "date": "2026/06/09", "inv": "", "note": "فاتورة مشتريات شركة المنجم للاغذية (جبن مزرلا +بطاطس"}]}, "ke": {"2026-06": {"v1": "", "lbl1": "مخصص شهري للسجل التجاري", "v2": "800", "lbl2": "فاتورة كهرباء + إيجار", "v3": "", "lbl3": "مصروف إضافي"}}}
 
-let DB = JSON.parse(localStorage.getItem('mxp_v2') || JSON.stringify(INIT_DATA));
-function save(){ localStorage.setItem('mxp_v2', JSON.stringify(DB)); }
+let DB = JSON.parse(localStorage.getItem('mxp_v3') || JSON.stringify(INIT_DATA));
+function save(){ localStorage.setItem('mxp_v3', JSON.stringify(DB)); }
 
 const MN=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const DN=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
@@ -615,10 +616,10 @@ function goNow(p){const ms=document.getElementById(p+'-m'),ys=document.getElemen
 
 // ══════════ CARRIED BALANCE ══════════
 function saveCarried(){
-  const{ym}=getYM('d');
+  const{ym}=getYM('k');
   if(!DB.carried)DB.carried={};
   DB.carried[ym]=parseFloat(document.getElementById('carried-inp').value)||0;
-  save(); renderDash();
+  save(); renderKashf();
 }
 
 // ══════════ DASHBOARD ══════════
@@ -626,37 +627,30 @@ function renderDash(){
   const{y,m,ym}=getYM('d');
   const mt=monthT(ym), exp=fullExp(ym), carried=getCarried(ym);
   const profit=mt.total-exp.total+carried;
-  // Sandooq naqdi = cash - daily_exp - sal - manual + carried
-  const sqCash=mt.cash-mt.exp-exp.salSum-exp.man+carried;
-  const sqNet=mt.net;
-  const sqProfit=profit;
-
-  // Load carried input
-  document.getElementById('carried-inp').value=(DB.carried||{})[ym]||'';
-  document.getElementById('carried-note').textContent=carried>0?`✅ مرحّل: ${fmt(carried)} ريال`:'';
 
   document.getElementById('sq-grid').innerHTML=`
     <div class="sq-card sq-green">
-      <div class="sq-lbl">💵 الصندوق النقدي (كاش متوفر)</div>
-      <div class="sq-val">${fmt(sqCash)}</div>
-      <div class="sq-sub">بعد خصم المصروفات والسحبيات</div>
+      <div class="sq-lbl">💵 إجمالي الكاش</div>
+      <div class="sq-val">${fmt(mt.cash)}</div>
+      <div class="sq-sub">مجموع مبيعات الكاش</div>
     </div>
     <div class="sq-card sq-blue">
-      <div class="sq-lbl">🏦 حساب الشبكة (بنك)</div>
-      <div class="sq-val">${fmt(sqNet)}</div>
-      <div class="sq-sub">إجمالي مبيعات الشبكة</div>
+      <div class="sq-lbl">💳 إجمالي الشبكة</div>
+      <div class="sq-val">${fmt(mt.net)}</div>
+      <div class="sq-sub">مجموع مبيعات الشبكة</div>
     </div>
     <div class="sq-card sq-purple">
-      <div class="sq-lbl">📊 صافي الربح الشهري</div>
-      <div class="sq-val" style="color:${sqProfit<0?'#f87171':'#c084fc'}">${fmt(sqProfit)}</div>
-      <div class="sq-sub">الإيرادات - المصروفات + المرحّل</div>
+      <div class="sq-lbl">🧾 إجمالي المصروفات اليومية</div>
+      <div class="sq-val" style="color:#f87171">${fmt(mt.exp)}</div>
+      <div class="sq-sub">مجموع المصروفات المسجلة</div>
     </div>`;
 
+  // إجمالي المبيعات = كاش + شبكة + مصروفات
   document.getElementById('dash-kpis').innerHTML=`
-    <div class="kpi kg"><div class="kpi-ic">💵</div><div class="kpi-lbl">إجمالي الكاش</div><div class="kpi-val">${fmt(mt.cash)}</div><div class="kpi-sub">ريال</div></div>
-    <div class="kpi ko"><div class="kpi-ic">💳</div><div class="kpi-lbl">إجمالي الشبكة</div><div class="kpi-val">${fmt(mt.net)}</div><div class="kpi-sub">ريال</div></div>
-    <div class="kpi kr"><div class="kpi-ic">🧾</div><div class="kpi-lbl">إجمالي المصروفات</div><div class="kpi-val">${fmt(exp.total)}</div><div class="kpi-sub">ريال</div></div>
-    <div class="kpi kb"><div class="kpi-ic">📊</div><div class="kpi-lbl">صافي الربح</div><div class="kpi-val" style="color:${profit<0?'var(--red)':'var(--text)'}">${fmt(profit)}</div><div class="kpi-sub">ريال</div></div>`;
+    <div class="kpi kg"><div class="kpi-ic">💵</div><div class="kpi-lbl">كاش</div><div class="kpi-val">${fmt(mt.cash)}</div><div class="kpi-sub">ريال</div></div>
+    <div class="kpi ko"><div class="kpi-ic">💳</div><div class="kpi-lbl">شبكة</div><div class="kpi-val">${fmt(mt.net)}</div><div class="kpi-sub">ريال</div></div>
+    <div class="kpi kr"><div class="kpi-ic">🧾</div><div class="kpi-lbl">مصروفات</div><div class="kpi-val">${fmt(mt.exp)}</div><div class="kpi-sub">ريال</div></div>
+    <div class="kpi kb"><div class="kpi-ic">📈</div><div class="kpi-lbl">إجمالي المبيعات</div><div class="kpi-val">${fmt(mt.total)}</div><div class="kpi-sub">كاش + شبكة + مصروفات</div></div>`;
 
   const dim=new Date(y,m,0).getDate(),lbs=[],cd=[],nd=[];
   for(let d=1;d<=dim;d++){const ds=`${y}-${pad(m)}-${pad(d)}`;const t=dayT(ds);lbs.push(d);cd.push(t.cash);nd.push(t.net);}
@@ -756,6 +750,12 @@ function renderKashf(){
   document.getElementById('ke-sal').textContent=fmt(exp.salSum)+' ريال';
   ['1','2','3'].forEach(n=>{document.getElementById('ke-v'+n).value=ke['v'+n]||'';document.getElementById('ke-lbl'+n).value=ke['lbl'+n]||(['مخصص شهري للسجل التجاري','فاتورة كهرباء + إيجار','مصروف إضافي'][n-1]);});
   document.getElementById('ke-tot').textContent=fmt(exp.total)+' ريال';
+  // Load carried input in kashf
+  const carriedInp=document.getElementById('carried-inp');
+  if(carriedInp){ carriedInp.value=(DB.carried||{})[ym]||''; }
+  const carriedNote=document.getElementById('carried-note');
+  if(carriedNote){ carriedNote.textContent=carried>0?`✅ مرحّل: ${fmt(carried)} ريال`:''; }
+
   document.getElementById('kn-rev').textContent=fmt(mt.total)+' ريال';
   document.getElementById('kn-exp').textContent=fmt(exp.total)+' ريال';
   document.getElementById('kn-carried').textContent=fmt(carried)+' ريال';
@@ -764,7 +764,7 @@ function renderKashf(){
     <div class="kpi kg"><div class="kpi-ic">💵</div><div class="kpi-lbl">الصندوق النقدي</div><div class="kpi-val">${fmt(sqCash)}</div></div>
     <div class="kpi ko"><div class="kpi-ic">💳</div><div class="kpi-lbl">حساب الشبكة</div><div class="kpi-val">${fmt(mt.net)}</div></div>
     <div class="kpi kr"><div class="kpi-ic">🧾</div><div class="kpi-lbl">المصروفات</div><div class="kpi-val">${fmt(exp.total)}</div></div>
-    <div class="kpi kb"><div class="kpi-ic">📊</div><div class="kpi-lbl">صافي الربح</div><div class="kpi-val" style="color:${profit<0?'var(--red)':'var(--text)'}">${fmt(profit)}</div></div>`;
+    <div class="kpi kb"><div class="kpi-ic">🏁</div><div class="kpi-lbl">الرصيد الختامي</div><div class="kpi-val" style="color:${profit<0?'var(--red)':'var(--text)'}">${fmt(profit)}</div></div>`;
 }
 
 // ══════════ PURCHASES ══════════
@@ -862,7 +862,7 @@ function renderReport(){
         <tr class="tr-sub"><td>إجمالي الإيرادات (كاش + شبكة + مصروفات)</td><td>${fmt(mt.total)} ريال</td></tr>
         <tr class="tr-dan"><td>إجمالي المصروفات الكلية</td><td>${fmt(exp.total)} ريال</td></tr>
         ${carried>0?`<tr><td>رصيد مرحّل من الشهر السابق</td><td style="color:var(--green);font-weight:700">${fmt(carried)} ريال</td></tr>`:''}
-        <tr class="tr-tot"><td style="font-size:.95rem;font-weight:900">💰 صافي الربح الشهري</td><td style="font-size:.95rem;font-weight:900;color:${profit<0?'var(--red)':'var(--gd)'}">${fmt(profit)} ريال</td></tr>
+        <tr class="tr-tot"><td style="font-size:.95rem;font-weight:900">💰 الرصيد الختامي</td><td style="font-size:.95rem;font-weight:900;color:${profit<0?'var(--red)':'var(--gd)'}">${fmt(profit)} ريال</td></tr>
       </tbody></table></div>`;
 }
 
@@ -1006,7 +1006,7 @@ function printKashf(){
     ${carried>0?`<h3 class="section-title">💰 الرصيد المرحّل</h3><table><tr><td>رصيد مرحّل من الشهر السابق</td><td class="g">${fmt(carried)} ريال</td></tr></table>`:''}
     <h3 class="section-title">✨ النتيجة</h3>
     <table>
-      <tr class="profit"><td>صافي الربح الشهري</td><td>${fmt(profit)} ريال</td></tr>
+      <tr class="profit"><td>الرصيد الختامي</td><td>${fmt(profit)} ريال</td></tr>
     </table>
     <div class="footer">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')} | Mix Point System</div>
   `);
@@ -1194,7 +1194,7 @@ function exportKashfExcel(){
     ['إجمالي المصروفات',exp.total,'ريال',''],
     ['','','',''],
     ['رصيد مرحّل من الشهر السابق',carried,'ريال',''],
-    ['✨ صافي الربح الشهري',profit,'ريال',''],
+    ['🏁 الرصيد الختامي',profit,'ريال',''],
   ];
   const ws=XLSX.utils.aoa_to_sheet(data);
   styleSheet(ws,[30,15,8,8]);
@@ -1304,7 +1304,7 @@ function exportReportExcel(){
     ['مصروفات تشغيل',mt.exp],['مشتريات',exp.purSum],['سحبيات',exp.salSum],
     [ke.lbl1||'سجل تجاري',parseFloat(ke.v1||0)],[ke.lbl2||'كهرباء + إيجار',parseFloat(ke.v2||0)],[ke.lbl3||'مصروف إضافي',parseFloat(ke.v3||0)],
     ['إجمالي المصروفات',exp.total],['',''],
-    ['رصيد مرحّل',carried],['✨ صافي الربح الشهري',profit],
+    ['رصيد مرحّل',carried],['🏁 الرصيد الختامي',profit],
   ];
   const ws1=XLSX.utils.aoa_to_sheet(sum); styleSheet(ws1,[32,16]);
   XLSX.utils.book_append_sheet(wb,ws1,'الملخص التنفيذي');
