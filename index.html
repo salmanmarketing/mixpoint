@@ -18,7 +18,40 @@
   --blue:#2563eb;--bl:#dbeafe;
   --text:#1a1a1a;--muted:#6b7280;
   --sh:0 1px 4px rgba(0,0,0,.07);--shm:0 4px 16px rgba(0,0,0,.1);--shl:0 20px 60px rgba(0,0,0,.2);
+  --input-bg:transparent;--row-hover:#fafcf7;--table-head:#f0f4e8;
 }
+[data-theme="dark"]{
+  --bg:#0f1419;--card:#1a2028;--border:#2a3441;--sidebar:#0a0d12;
+  --green:#6bb521;--gd:#8fd634;--gl:#1e3311;
+  --orange:#ff8c3a;--ol:#3d1f0a;
+  --red:#f87171;--rl:#3d1414;
+  --blue:#60a5fa;--bl:#0f2847;
+  --text:#e2e8f0;--muted:#94a3b8;
+  --sh:0 1px 4px rgba(0,0,0,.3);--shm:0 4px 16px rgba(0,0,0,.4);--shl:0 20px 60px rgba(0,0,0,.6);
+  --input-bg:rgba(255,255,255,.03);--row-hover:#222b36;--table-head:#111820;
+}
+[data-theme="dark"] .kpi{background:var(--card);}
+[data-theme="dark"] .sc{background:var(--card);}
+[data-theme="dark"] .cc{background:var(--card);}
+[data-theme="dark"] .cal-day{background:var(--card);}
+[data-theme="dark"] .cal-day.has-data{background:linear-gradient(160deg,#1a2820,#1a2028);}
+[data-theme="dark"] .dt td{border-color:#222b36;}
+[data-theme="dark"] .dt tr:hover td{background:#222b36;}
+[data-theme="dark"] .purch-table td{border-color:#222b36;}
+[data-theme="dark"] .purch-table tr:nth-child(even) td{background:#151b23;}
+[data-theme="dark"] .purch-table tr:hover td{background:#222b36;}
+[data-theme="dark"] .purch-table td:first-child{background:#222b36 !important;border-left-color:#2a3441;}
+[data-theme="dark"] .purch-table td:first-child,[data-theme="dark"] .purch-table td:nth-child(2){border-left-color:#2a3441;}
+[data-theme="dark"] .dt td input,[data-theme="dark"] .purch-table td input,[data-theme="dark"] .ms-table td input{color:var(--text);}
+[data-theme="dark"] .single-input-wrap{background:var(--input-bg);}
+[data-theme="dark"] .single-input-wrap input{color:var(--text);}
+[data-theme="dark"] .modal{background:var(--card);}
+[data-theme="dark"] .backup-modal{background:var(--card);}
+[data-theme="dark"] .ms-table{border-color:var(--border);}
+[data-theme="dark"] .ms-table td{border-color:#222b36;}
+[data-theme="dark"] .carried-row{background:var(--card);}
+[data-theme="dark"] .carried-row input{background:var(--input-bg);color:var(--text);}
+[data-theme="dark"] .mnav select{background:var(--card);color:var(--text);}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
 
@@ -160,7 +193,9 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
 /* PURCHASES - Enhanced */
 .purch-table{width:100%;border-collapse:collapse;}
 .purch-table th{padding:10px 14px;text-align:right;font-size:.72rem;font-weight:800;color:#fff;background:linear-gradient(135deg,#1a1a1a,#2d2d2d);border-bottom:2px solid var(--green);}
-.purch-table td{padding:9px 12px;font-size:.83rem;border-bottom:1px solid #f0f4e8;vertical-align:middle;}
+.purch-table td{padding:9px 14px;font-size:.83rem;border-bottom:1px solid #f0f4e8;vertical-align:middle;}
+.purch-table td:first-child{border-left:2px solid #e0e8d6;padding:6px 8px;}
+.purch-table td:nth-child(2){border-left:2px solid #e0e8d6;}
 .purch-table tr:nth-child(even) td{background:#fafcf7;}
 .purch-table tr:hover td{background:#f2f9ea;}
 .purch-table .tr-tot td{background:var(--gl);font-weight:800;color:var(--gd);font-size:.88rem;}
@@ -263,7 +298,25 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
 
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-thumb{background:var(--green);border-radius:10px;}
-@media(max-width:768px){#sb{transform:translateX(100%);}#main{margin-right:0;}.pc{padding:14px;}.topbar{padding:11px 14px;}.kpi-grid{grid-template-columns:1fr 1fr;}}
+/* Mobile menu button */
+.menu-btn{display:none;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:4px 8px;}
+.sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199;}
+.sb-backdrop.open{display:block;}
+@media(max-width:768px){
+  #sb{transform:translateX(100%);width:260px;min-width:260px;}
+  #sb.open{transform:translateX(0);}
+  #main{margin-right:0;}
+  .pc{padding:14px;}
+  .topbar{padding:11px 14px;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .menu-btn{display:block;}
+  .search-wrap input{width:120px;}
+  .search-wrap input:focus{width:150px;}
+  .tb-right{gap:4px;}
+  .btn{padding:6px 10px;font-size:.72rem;}
+  .sandooq-grid{grid-template-columns:1fr;}
+  .charts-row.c2,.charts-row.c2b{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
@@ -294,15 +347,20 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
   <div class="sb-foot"><div id="clk"></div></div>
 </nav>
 
+<div class="sb-backdrop" id="sb-backdrop" onclick="toggleSidebar()"></div>
 <div id="main">
   <div class="topbar">
-    <div class="tb-title" id="tb-title">لوحة التحكم</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="tb-title" id="tb-title">لوحة التحكم</div>
+    </div>
     <div class="tb-right">
       <div class="search-wrap">
         <span class="si">🔍</span>
         <input type="text" id="search-inp" placeholder="بحث..." oninput="doSearch(this.value)" onblur="setTimeout(()=>closeSearch(),200)">
         <div id="search-results"></div>
       </div>
+      <button class="btn btn-ghost btn-sm" id="theme-btn" onclick="toggleTheme()" title="الوضع الليلي">🌙</button>
       <span id="cloud-status" style="font-size:.7rem;color:#60a5fa;font-weight:600;min-width:70px">☁️</span>
       <button class="btn btn-green btn-sm" id="save-btn" onclick="manualSave()">💾 حفظ</button>
       <span id="save-status" style="font-size:.72rem;color:#7bc42a;font-weight:600;min-width:70px"></span>
@@ -463,7 +521,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
         </div>
         <div class="single-input-wrap">
           <span style="font-size:1.1rem">💵</span>
-          <input type="number" id="inp-cash" placeholder="0" oninput="onSingle()">
+          <input type="number" inputmode="decimal" dir="ltr" id="inp-cash" placeholder="0" oninput="onSingle()">
           <span class="suf">ريال</span>
         </div>
       </div>
@@ -474,7 +532,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
         </div>
         <div class="single-input-wrap" style="border-color:var(--border)">
           <span style="font-size:1.1rem">💳</span>
-          <input type="number" id="inp-net" placeholder="0" oninput="onSingle()" style="color:var(--orange)">
+          <input type="number" inputmode="decimal" dir="ltr" id="inp-net" placeholder="0" oninput="onSingle()" style="color:var(--orange)">
           <span class="suf">ريال</span>
         </div>
       </div>
@@ -695,6 +753,17 @@ function showPage(n,btn){
   if(btn)btn.classList.add('active');
   document.getElementById('tb-title').textContent=PT[n]||'';
   ({dash:renderDash,daily:renderDaily,kashf:renderKashf,purch:renderPurch,sal:renderSal,report:renderReport})[n]?.();
+  // Close sidebar on mobile after selection
+  if(window.innerWidth<=768) closeSidebar();
+}
+
+function toggleSidebar(){
+  document.getElementById('sb').classList.toggle('open');
+  document.getElementById('sb-backdrop').classList.toggle('open');
+}
+function closeSidebar(){
+  document.getElementById('sb').classList.remove('open');
+  document.getElementById('sb-backdrop').classList.remove('open');
 }
 
 // ══════════ SELECTS ══════════
@@ -804,7 +873,7 @@ function onSingle(){
   save();updateFooter();
 }
 function renderExpRows(rows){
-  document.getElementById('exp-rows').innerHTML=rows.map((r,i)=>`<tr><td><input type="text" value="${r.note||''}" placeholder="البند..." onchange="updateExp(${i},'note',this.value)"></td><td><input type="number" value="${r.amount||''}" placeholder="0" oninput="updateExp(${i},'amount',this.value);updateFooter()"></td><td><button class="del-btn" onclick="delExp(${i})">🗑</button></td></tr>`).join('');
+  document.getElementById('exp-rows').innerHTML=rows.map((r,i)=>`<tr><td><input type="text" dir="rtl" value="${r.note||''}" placeholder="البند..." onchange="updateExp(${i},'note',this.value)"></td><td><input type="number" inputmode="decimal" dir="ltr" value="${r.amount||''}" placeholder="0" style="text-align:left" oninput="updateExp(${i},'amount',this.value);updateFooter()"></td><td><button class="del-btn" onclick="delExp(${i})">🗑</button></td></tr>`).join('');
 }
 function addExpRow(){
   if(!DB.daily)DB.daily={};if(!DB.daily[_ds])DB.daily[_ds]={cash:0,net:0,exp:[]};if(!DB.daily[_ds].exp)DB.daily[_ds].exp=[];
@@ -861,19 +930,33 @@ function renderKashf(){
 
 // ══════════ PURCHASES ══════════
 function todayDate(){const t=new Date();return `${t.getFullYear()}/${pad(t.getMonth()+1)}/${pad(t.getDate())}`;}
+function parseDateForSort(dstr){
+  // Convert 2026/06/05 or 2026-06-05 to sortable number
+  if(!dstr) return 99999999;
+  const clean = String(dstr).replace(/[-/]/g,'');
+  const num = parseInt(clean);
+  return isNaN(num) ? 99999999 : num;
+}
+
+function sortPurchByDate(ym){
+  if(!DB.purch||!DB.purch[ym]) return;
+  DB.purch[ym].sort((a,b)=>parseDateForSort(a.date)-parseDateForSort(b.date));
+}
+
 function renderPurch(){
   const{y,m,ym}=getYM('p');
   document.getElementById('p-lbl').textContent=`${MN[m-1]} ${y}`;
   if(!DB.purch)DB.purch={};if(!DB.purch[ym])DB.purch[ym]=[];
+  sortPurchByDate(ym);
   let tot=0,num=1;
   document.getElementById('p-body').innerHTML=DB.purch[ym].map((r,i)=>{
     tot+=parseFloat(r.amount||0);
     return `<tr>
-      <td style="color:var(--muted);font-size:.75rem;width:30px">${num++}</td>
-      <td><input type="number" value="${r.amount||''}" placeholder="0" onchange="upP('${ym}',${i},'amount',this.value)"></td>
-      <td><input type="text" value="${r.date||todayDate()}" placeholder="${y}/${pad(m)}/..." onchange="upP('${ym}',${i},'date',this.value)"></td>
-      <td><input type="text" value="${r.note||''}" placeholder="البيان / وصف المشتريات..." style="font-size:.84rem;font-weight:500" onchange="upP('${ym}',${i},'note',this.value)"></td>
-      <td><input type="text" value="${r.inv||''}" placeholder="رقم الفاتورة" class="inv-num" onchange="upP('${ym}',${i},'inv',this.value)"></td>
+      <td style="color:var(--muted);font-size:.72rem;width:36px;text-align:center;background:#f0f4e8;border-radius:6px;font-weight:700">${num++}</td>
+      <td><input type="number" inputmode="decimal" dir="ltr" value="${r.amount||''}" placeholder="0" style="text-align:left;font-weight:700" onchange="upP('${ym}',${i},'amount',this.value)"></td>
+      <td><input type="text" inputmode="numeric" dir="ltr" value="${r.date||todayDate()}" placeholder="${y}/${pad(m)}/..." style="text-align:center" onchange="upP('${ym}',${i},'date',this.value);renderPurch()"></td>
+      <td><input type="text" dir="rtl" value="${r.note||''}" placeholder="البيان / وصف المشتريات..." style="font-size:.84rem;font-weight:500" onchange="upP('${ym}',${i},'note',this.value)"></td>
+      <td><input type="text" inputmode="numeric" dir="ltr" value="${r.inv||''}" placeholder="رقم الفاتورة" class="inv-num" style="text-align:center" onchange="upP('${ym}',${i},'inv',this.value)"></td>
       <td><button class="del-btn" onclick="delP('${ym}',${i})">🗑</button></td>
     </tr>`;
   }).join('');
@@ -905,8 +988,8 @@ function renderSal(){
   }
   document.getElementById('sal-con').innerHTML=DB.sal[ym].map((e,ei)=>{
     const tot=(e.draws||[]).reduce((s,d)=>s+(parseFloat(d.amount)||0),0);
-    const dr=(e.draws||[]).map((d,di)=>`<tr><td><input type="number" value="${d.amount||''}" placeholder="0" onchange="upDraw('${ym}',${ei},${di},'amount',this.value)"></td><td><input type="text" value="${d.date||''}" placeholder="التاريخ" onchange="upDraw('${ym}',${ei},${di},'date',this.value)"></td><td><input type="text" value="${d.note||''}" placeholder="ملاحظة" onchange="upDraw('${ym}',${ei},${di},'note',this.value)"></td><td><button class="del-btn" onclick="delDraw('${ym}',${ei},${di})">🗑</button></td></tr>`).join('');
-    return `<div class="emp-card"><div class="emp-head"><div style="display:flex;align-items:center;gap:9px"><span style="opacity:.6;font-size:.76rem">👤</span><input type="text" value="${e.name||''}" placeholder="اسم الموظف..." onchange="upEmpName('${ym}',${ei},this.value)"></div><div style="display:flex;align-items:center;gap:9px"><span style="opacity:.6;font-size:.76rem">الراتب:</span><input type="number" value="${e.salary||''}" placeholder="0" style="width:95px" onchange="upEmpSal('${ym}',${ei},this.value)"><span style="opacity:.5;font-size:.74rem">ريال</span><button class="btn btn-red btn-sm" onclick="delEmp('${ym}',${ei})">حذف</button></div></div><table class="dt"><thead><tr><th>المبلغ</th><th>التاريخ</th><th>ملاحظات</th><th></th></tr></thead><tbody>${dr}</tbody><tfoot><tr class="tr-tot"><td>الإجمالي</td><td>${fmt(tot)} ريال</td><td></td><td></td></tr></tfoot></table><button class="add-r" onclick="addDraw('${ym}',${ei})">＋ إضافة سحب</button></div>`;
+    const dr=(e.draws||[]).map((d,di)=>`<tr><td><input type="number" inputmode="decimal" dir="ltr" value="${d.amount||''}" placeholder="0" style="text-align:left" onchange="upDraw('${ym}',${ei},${di},'amount',this.value)"></td><td><input type="text" inputmode="numeric" dir="ltr" value="${d.date||''}" placeholder="التاريخ" style="text-align:center" onchange="upDraw('${ym}',${ei},${di},'date',this.value)"></td><td><input type="text" dir="rtl" value="${d.note||''}" placeholder="ملاحظة" onchange="upDraw('${ym}',${ei},${di},'note',this.value)"></td><td><button class="del-btn" onclick="delDraw('${ym}',${ei},${di})">🗑</button></td></tr>`).join('');
+    return `<div class="emp-card"><div class="emp-head"><div style="display:flex;align-items:center;gap:9px"><span style="opacity:.6;font-size:.76rem">👤</span><input type="text" value="${e.name||''}" placeholder="اسم الموظف..." onchange="upEmpName('${ym}',${ei},this.value)"></div><div style="display:flex;align-items:center;gap:9px"><span style="opacity:.6;font-size:.76rem">الراتب:</span><input type="number" inputmode="decimal" dir="ltr" value="${e.salary||''}" placeholder="0" style="width:95px;text-align:left" onchange="upEmpSal('${ym}',${ei},this.value)"><span style="opacity:.5;font-size:.74rem">ريال</span><button class="btn btn-red btn-sm" onclick="delEmp('${ym}',${ei})">حذف</button></div></div><table class="dt"><thead><tr><th>المبلغ</th><th>التاريخ</th><th>ملاحظات</th><th></th></tr></thead><tbody>${dr}</tbody><tfoot><tr class="tr-tot"><td>الإجمالي</td><td>${fmt(tot)} ريال</td><td></td><td></td></tr></tfoot></table><button class="add-r" onclick="addDraw('${ym}',${ei})">＋ إضافة سحب</button></div>`;
   }).join('');
 }
 function addEmp(){const{ym}=getYM('s');if(!DB.sal)DB.sal={};if(!DB.sal[ym])DB.sal[ym]=[];DB.sal[ym].push({name:'',salary:'',draws:[]});save();renderSal();}
@@ -1531,6 +1614,27 @@ function importBackup(){
 
 
 // ══════════ INIT ══════════
+// ══════════ THEME ══════════
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('mxp_theme', next);
+  document.getElementById('theme-btn').textContent = next === 'dark' ? '☀️' : '🌙';
+  // Re-render charts with new colors
+  const active = document.querySelector('.page.active');
+  if(active && active.id==='page-dash') renderDash();
+}
+// Load saved theme
+(function(){
+  const saved = localStorage.getItem('mxp_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  setTimeout(()=>{
+    const btn=document.getElementById('theme-btn');
+    if(btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+  },100);
+})();
+
 ['d','dy','k','p','s','r'].forEach(p=>{fillSel(p+'-m','m');fillSel(p+'-y','y');});
 loadFromCloud();
 </script>
