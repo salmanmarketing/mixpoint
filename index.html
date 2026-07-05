@@ -379,6 +379,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
     <button class="nb" onclick="showPage('report',this)"><div class="ni">📈</div>التقرير الشهري</button>
     <button class="nb" onclick="showPage('purchreport',this)"><div class="ni">🛒</div>تقارير المشتريات</button>
     <button class="nb" onclick="showPage('compare',this)"><div class="ni">⚖️</div>المقارنة</button>
+    <button class="nb" onclick="showPage('audit',this)"><div class="ni">🔍</div>المراجعة الشهرية</button>
     <div class="sb-lbl" id="lbl-data">البيانات</div>
     <button class="nb" onclick="openBackup()" id="nav-backup"><div class="ni">💾</div>نسخ احتياطي</button>
     <div class="sb-lbl admin-only" id="lbl-users">الإدارة المتقدمة</div>
@@ -459,7 +460,8 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
       <!-- رصيد مرحّل -->
       <div class="carried-row">
         <label>💰 رصيد مرحّل من الشهر السابق:</label>
-        <input type="number" id="carried-inp" placeholder="0" oninput="saveCarried()">
+        <input type="number" inputmode="decimal" dir="ltr" id="carried-inp" placeholder="0" style="text-align:left" oninput="saveCarried()">
+        <button class="btn btn-green btn-sm" onclick="autoCarryBalance()" title="نقل الرصيد الختامي من الشهر السابق تلقائياً">⬇️ نقل تلقائي</button>
         <span class="cr-note" id="carried-note"></span>
       </div>
       <div class="kpi-grid" id="k-kpis"></div>
@@ -580,6 +582,17 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
         </div>
         <button class="add-r" onclick="addUser()">＋ إضافة مستخدم جديد</button>
       </div>
+    </div>
+
+    <!-- MONTHLY AUDIT -->
+    <div class="page" id="page-audit">
+      <div class="mnav">
+        <select id="au-m" onchange="renderAudit()"></select>
+        <select id="au-y" onchange="renderAudit()"></select>
+        <button class="btn btn-green btn-sm" onclick="goNow('au')">الحالي</button>
+        <button class="btn btn-outline btn-sm" onclick="printAudit()">🖨️ طباعة</button>
+      </div>
+      <div id="audit-body"></div>
     </div>
     <!-- MONTHLY REPORT -->
     <div class="page" id="page-report">
@@ -844,7 +857,7 @@ function getCarried(ym){return parseFloat((DB.carried||{})[ym]||0);}
 setInterval(()=>{const t=new Date();document.getElementById('clk').textContent=`${DN[t.getDay()]} ${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`;},1000);
 
 // ══════════ NAV ══════════
-const PT={dash:'لوحة التحكم',daily:'المبيعات اليومية',kashf:'كشف الحساب',purch:'المشتريات',sal:'السحبيات',report:'التقرير الشهري',purchreport:'تقارير المشتريات',compare:'المقارنة',users:'إدارة المستخدمين'};
+const PT={dash:'لوحة التحكم',daily:'المبيعات اليومية',kashf:'كشف الحساب',purch:'المشتريات',sal:'السحبيات',report:'التقرير الشهري',purchreport:'تقارير المشتريات',compare:'المقارنة',audit:'المراجعة الشهرية',users:'إدارة المستخدمين'};
 function showPage(n,btn){
   // Permission guard
   if(currentUser){
@@ -856,7 +869,7 @@ function showPage(n,btn){
   document.getElementById('page-'+n).classList.add('active');
   if(btn)btn.classList.add('active');
   document.getElementById('tb-title').textContent=PT[n]||'';
-  ({dash:renderDash,daily:renderDaily,kashf:renderKashf,purch:renderPurch,sal:renderSal,report:renderReport,purchreport:renderPurchReport,compare:renderCompare,users:renderUsers})[n]?.();
+  ({dash:renderDash,daily:renderDaily,kashf:renderKashf,purch:renderPurch,sal:renderSal,report:renderReport,purchreport:renderPurchReport,compare:renderCompare,audit:renderAudit,users:renderUsers})[n]?.();
   // Close sidebar on mobile after selection
   if(window.innerWidth<=768) closeSidebar();
 }
@@ -885,6 +898,32 @@ function saveCarried(){
   if(!DB.carried)DB.carried={};
   DB.carried[ym]=parseFloat(document.getElementById('carried-inp').value)||0;
   save(); renderKashf();
+}
+
+function autoCarryBalance(){
+  const{y,m,ym}=getYM('k');
+  // Get previous month
+  const prevM = m===1 ? 12 : m-1;
+  const prevY = m===1 ? y-1 : y;
+  const prevYM = `${prevY}-${pad(prevM)}`;
+  // Calculate previous month's closing balance (الرصيد الختامي)
+  const pt=monthT(prevYM), pe=fullExp(prevYM), pc=getCarried(prevYM);
+  const prevClosing = pt.total - pe.total + pc;
+  
+  if(pt.total===0 && pc===0){
+    document.getElementById('carried-note').textContent='⚠️ لا توجد بيانات في '+MN[prevM-1];
+    document.getElementById('carried-note').style.color='var(--orange)';
+    return;
+  }
+  
+  if(!confirm(`سيتم نقل الرصيد الختامي من ${MN[prevM-1]} ${prevY}\nوهو: ${fmt(prevClosing)} ريال\n\nهل تريد المتابعة؟`)) return;
+  
+  if(!DB.carried)DB.carried={};
+  DB.carried[ym]=prevClosing;
+  document.getElementById('carried-inp').value=prevClosing;
+  save(); renderKashf();
+  document.getElementById('carried-note').textContent=`✅ تم نقل ${fmt(prevClosing)} ريال من ${MN[prevM-1]}`;
+  document.getElementById('carried-note').style.color='var(--green)';
 }
 
 // ══════════ DASHBOARD ══════════
@@ -1297,6 +1336,214 @@ function exportPurchReportExcel(){
   XLSX.writeFile(wb,`تحليل_المشتريات_${period}.xlsx`);
 }
 
+
+
+// ══════════ MONTHLY AUDIT (المراجعة الشهرية) ══════════
+function renderAudit(){
+  const{y,m,ym}=getYM('au');
+  const dim=new Date(y,m,0).getDate();
+  const issues=[];  // {type, severity, msg, action}
+  const today=new Date();
+  const isCurrentMonth = (y===today.getFullYear() && m===today.getMonth()+1);
+  const lastDayToCheck = isCurrentMonth ? today.getDate() : dim;
+  
+  // 1. Check missing days (أيام ناقصة)
+  const missingDays=[];
+  for(let d=1;d<=lastDayToCheck;d++){
+    const ds=`${y}-${pad(m)}-${pad(d)}`;
+    const t=dayT(ds);
+    if(t.cash===0 && t.net===0 && t.exp===0){
+      missingDays.push(d);
+    }
+  }
+  if(missingDays.length>0){
+    issues.push({
+      severity: missingDays.length>5?'high':'medium',
+      icon:'📅',
+      title:'أيام بدون تسجيل',
+      msg:`${missingDays.length} يوم بدون أي مبيعات: ${missingDays.join('، ')}`,
+      hint:'تأكد إذا كانت أيام إجازة أو نسيت تسجيلها'
+    });
+  }
+  
+  // 2. Check empty expenses (مصروفات فارغة)
+  let emptyExp=0, emptyExpDays=[];
+  Object.keys(DB.daily||{}).filter(d=>d.startsWith(ym)).forEach(d=>{
+    (DB.daily[d].exp||[]).forEach(e=>{
+      const hasAmount = e.amount && parseFloat(e.amount)>0;
+      const hasNote = e.note && e.note.trim();
+      if((hasNote && !hasAmount) || (!hasNote && hasAmount)){
+        emptyExp++;
+        const dayNum = parseInt(d.split('-')[2]);
+        if(!emptyExpDays.includes(dayNum)) emptyExpDays.push(dayNum);
+      }
+    });
+  });
+  if(emptyExp>0){
+    issues.push({
+      severity:'medium',
+      icon:'🧾',
+      title:'مصروفات ناقصة',
+      msg:`${emptyExp} مصروف فيه بيان بدون مبلغ (أو العكس) في أيام: ${emptyExpDays.sort((a,b)=>a-b).join('، ')}`,
+      hint:'راجع هذي الأيام وأكمل الناقص'
+    });
+  }
+  
+  // 3. Check empty purchases (مشتريات فارغة)
+  let emptyPurch=0;
+  ((DB.purch||{})[ym]||[]).forEach(r=>{
+    const hasAmount = r.amount && parseFloat(r.amount)>0;
+    const hasNote = r.note && r.note.trim();
+    if((hasNote && !hasAmount) || (!hasNote && hasAmount)){
+      emptyPurch++;
+    }
+  });
+  if(emptyPurch>0){
+    issues.push({
+      severity:'medium',
+      icon:'🛒',
+      title:'مشتريات ناقصة',
+      msg:`${emptyPurch} فاتورة فيها بيان بدون مبلغ (أو العكس)`,
+      hint:'راجع قسم المشتريات وأكمل الناقص'
+    });
+  }
+  
+  // 4. Check unusual numbers (أرقام غريبة)
+  const recordedDays=[];
+  for(let d=1;d<=dim;d++){
+    const ds=`${y}-${pad(m)}-${pad(d)}`;
+    const t=dayT(ds);
+    if(t.cash>0||t.net>0) recordedDays.push({d, total:t.cash+t.net});
+  }
+  if(recordedDays.length>=3){
+    const avg = recordedDays.reduce((s,r)=>s+r.total,0)/recordedDays.length;
+    const veryHigh = recordedDays.filter(r=>r.total > avg*2.5);
+    const veryLow = recordedDays.filter(r=>r.total < avg*0.3 && r.total>0);
+    if(veryHigh.length>0){
+      issues.push({
+        severity:'low',
+        icon:'⬆️',
+        title:'أيام مبيعاتها مرتفعة جداً',
+        msg:`أيام ${veryHigh.map(r=>r.d).join('، ')} مبيعاتها أعلى من المتوسط بكثير (المتوسط ${fmt(avg)})`,
+        hint:'تأكد إن الأرقام صحيحة مو خطأ إدخال'
+      });
+    }
+    if(veryLow.length>0){
+      issues.push({
+        severity:'low',
+        icon:'⬇️',
+        title:'أيام مبيعاتها منخفضة جداً',
+        msg:`أيام ${veryLow.map(r=>r.d).join('، ')} مبيعاتها أقل من المتوسط بكثير`,
+        hint:'تأكد إنك ما نسيت تكمل تسجيل مبيعات اليوم'
+      });
+    }
+  }
+  
+  // 5. Balance verification (التوازن الحسابي)
+  const mt=monthT(ym);
+  // Each day: cash + net + exp = daily total. Verify sum
+  let calcTotal=0;
+  Object.keys(DB.daily||{}).filter(d=>d.startsWith(ym)).forEach(d=>{
+    const t=dayT(d);
+    calcTotal += t.total;
+  });
+  const balanceOk = Math.abs(calcTotal - mt.total) < 0.01;
+  
+  // 6. Check carried balance for month
+  const carried = getCarried(ym);
+  const ke=(DB.ke||{})[ym]||{};
+  const hasRent = ke.v2 && parseFloat(ke.v2)>0;
+  if(mt.total>0 && !hasRent){
+    issues.push({
+      severity:'medium',
+      icon:'💡',
+      title:'فاتورة الكهرباء/الإيجار غير مسجلة',
+      msg:'الشهر فيه مبيعات لكن ما سجلت الكهرباء والإيجار',
+      hint:'روح كشف الحساب وأدخل المصروفات الثابتة'
+    });
+  }
+  
+  // Build verdict
+  const highIssues = issues.filter(i=>i.severity==='high').length;
+  const medIssues = issues.filter(i=>i.severity==='medium').length;
+  const lowIssues = issues.filter(i=>i.severity==='low').length;
+  
+  let verdict, vColor, vIcon;
+  if(issues.length===0 && balanceOk){
+    verdict='الشهر متوازن وسليم! ✅';
+    vColor='var(--green)';
+    vIcon='✅';
+  } else if(highIssues>0 || !balanceOk){
+    verdict='يحتاج مراجعة — فيه ملاحظات مهمة';
+    vColor='var(--red)';
+    vIcon='⚠️';
+  } else {
+    verdict='جيد — فيه ملاحظات بسيطة';
+    vColor='var(--orange)';
+    vIcon='📝';
+  }
+  
+  const sevColors={high:'var(--red)',medium:'var(--orange)',low:'var(--blue)'};
+  const sevBg={high:'var(--rl)',medium:'var(--ol)',low:'var(--bl)'};
+  const sevLabels={high:'مهم',medium:'متوسط',low:'ملاحظة'};
+  
+  const issuesHtml = issues.length>0 ? issues.map(i=>`
+    <div style="background:${sevBg[i.severity]};border-right:4px solid ${sevColors[i.severity]};border-radius:10px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <div style="font-weight:800;font-size:.88rem">${i.icon} ${i.title}</div>
+        <span style="font-size:.68rem;background:${sevColors[i.severity]};color:#fff;padding:2px 10px;border-radius:20px;font-weight:700">${sevLabels[i.severity]}</span>
+      </div>
+      <div style="font-size:.82rem;color:var(--text);margin-bottom:4px">${i.msg}</div>
+      <div style="font-size:.74rem;color:var(--muted)">💬 ${i.hint}</div>
+    </div>
+  `).join('') : '<div style="text-align:center;padding:30px;color:var(--green);font-size:.95rem;font-weight:700">🎉 لا توجد أي ملاحظات! كل شيء مضبوط</div>';
+  
+  document.getElementById('audit-body').innerHTML=`
+    <!-- Verdict -->
+    <div class="sq-card" style="background:linear-gradient(135deg,#141414,#1e2e14);border-right:5px solid ${vColor};margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="font-size:2.4rem">${vIcon}</div>
+        <div>
+          <div style="font-size:1.1rem;font-weight:900;color:#fff">${verdict}</div>
+          <div style="font-size:.8rem;opacity:.6;color:#fff;margin-top:3px">${MN[m-1]} ${y} — ${issues.length} ملاحظة (${highIssues} مهمة، ${medIssues} متوسطة، ${lowIssues} بسيطة)</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Balance check -->
+    <div class="sc" style="margin-bottom:16px">
+      <div class="sh ${balanceOk?'sh-green':'sh-red'}">🧮 التحقق من التوازن الحسابي</div>
+      <table class="dt"><tbody>
+        <tr><td>💵 مجموع الكاش</td><td style="text-align:left;font-weight:700">${fmt(mt.cash)} ريال</td></tr>
+        <tr><td>💳 مجموع الشبكة</td><td style="text-align:left;font-weight:700">${fmt(mt.net)} ريال</td></tr>
+        <tr><td>🧾 مجموع المصروفات</td><td style="text-align:left;font-weight:700">${fmt(mt.exp)} ريال</td></tr>
+        <tr class="tr-tot"><td>الإجمالي المحسوب (كاش+شبكة+مصروفات)</td><td style="text-align:left">${fmt(mt.total)} ريال</td></tr>
+        <tr class="${balanceOk?'tr-tot':'tr-dan'}"><td>${balanceOk?'✅ التوازن سليم':'⚠️ يوجد اختلاف'}</td><td style="text-align:left">${balanceOk?'الأرقام متطابقة':'راجع الإدخالات'}</td></tr>
+      </tbody></table>
+    </div>
+    
+    <!-- Issues -->
+    <div class="sc">
+      <div class="sh sh-dark">🔍 نتيجة المراجعة والملاحظات</div>
+      <div style="padding:16px 18px">${issuesHtml}</div>
+    </div>
+    
+    <!-- Summary stats -->
+    <div class="sc" style="margin-top:16px">
+      <div class="sh sh-plain">📊 ملخص الحركة</div>
+      <table class="dt"><tbody>
+        <tr><td>أيام مسجلة</td><td style="text-align:left;font-weight:700">${recordedDays.length} من ${lastDayToCheck} يوم</td></tr>
+        <tr><td>عدد فواتير المشتريات</td><td style="text-align:left;font-weight:700">${((DB.purch||{})[ym]||[]).length} فاتورة</td></tr>
+        <tr><td>متوسط المبيعات اليومي</td><td style="text-align:left;font-weight:700">${recordedDays.length>0?fmt(recordedDays.reduce((s,r)=>s+r.total,0)/recordedDays.length):0} ريال</td></tr>
+      </tbody></table>
+    </div>`;
+}
+
+function printAudit(){
+  const{y,m,ym}=getYM('au');
+  renderAudit();
+  setTimeout(()=>window.print(),300);
+}
 
 // ══════════ COMPARISON (المقارنة) ══════════
 function pctChange(oldVal, newVal){
@@ -2079,8 +2326,8 @@ function checkAuth(){
 
 // Permission matrix: which pages each role can access
 const ROLE_PAGES = {
-  admin: ['dash','daily','kashf','purch','sal','report','purchreport','compare','users'],
-  viewer: ['dash','daily','kashf','purch','sal','report','purchreport','compare'],
+  admin: ['dash','daily','kashf','purch','sal','report','purchreport','compare','audit','users'],
+  viewer: ['dash','daily','kashf','purch','sal','report','purchreport','compare','audit'],
   cashier: ['daily']
 };
 // Which roles can EDIT (others are read-only)
@@ -2291,7 +2538,7 @@ initUsers();
 if(!sessionStorage.getItem('mxp_current_user')){
   document.getElementById('login-screen').style.display='flex';
 }
-['d','dy','k','p','s','r','pr'].forEach(p=>{fillSel(p+'-m','m');fillSel(p+'-y','y');});
+['d','dy','k','p','s','r','pr','au'].forEach(p=>{fillSel(p+'-m','m');fillSel(p+'-y','y');});
 // Compare selects
 ['cmp1','cmp2'].forEach(p=>{fillSel(p+'-m','m');fillSel(p+'-y','y');});
 // Default: cmp1 = previous month, cmp2 = current month
