@@ -581,7 +581,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dis
     <!-- USERS MANAGEMENT -->
     <div class="page" id="page-users">
       <div class="sc" style="margin-bottom:16px">
-        <div class="sh sh-dark">👥 إدارة المستخدمين والصلاحيات</div>
+        <div class="sh sh-dark">👥 إدارة المستخدمين والصلاحيات <span id="user-save-badge" style="font-size:.72rem;font-weight:400;opacity:0;transition:opacity .3s;color:#7bc42a">✅ تم الحفظ</span></div>
         <div style="padding:16px 20px">
           <div style="font-size:.82rem;color:var(--muted);margin-bottom:16px">أضف مستخدمين وحدد صلاحية كل واحد. الأنواع: <b>مدير</b> (كل الصلاحيات) · <b>مشاهد</b> (عرض فقط) · <b>كاشير</b> (مبيعات يومية فقط)</div>
           <div id="users-list"></div>
@@ -725,6 +725,8 @@ function mergeData(base, saved){
   if(saved.sal) Object.keys(saved.sal).forEach(k=>{ result.sal[k]=saved.sal[k]; });
   if(saved.ke) Object.keys(saved.ke).forEach(k=>{ result.ke[k]=saved.ke[k]; });
   if(saved.carried) Object.assign(result.carried={...(result.carried||{})}, saved.carried);
+  // Users: saved (cloud/local) is source of truth if it exists
+  if(saved.users && saved.users.length>0) result.users = saved.users;
   return result;
 }
 
@@ -743,6 +745,17 @@ function save(){
       fbDB.ref('mixpoint_data').set(DB).catch(e=>console.warn('Cloud save failed',e));
     }, 800);
   }
+}
+
+// Immediate save (for critical data like users - no debounce)
+function saveNow(){
+  localStorage.setItem('mxp_v4', JSON.stringify(DB));
+  showSaveStatus('manual');
+  if(fbReady){
+    clearTimeout(_saveTimeout);
+    return fbDB.ref('mixpoint_data').set(DB).catch(e=>console.warn('Cloud save failed',e));
+  }
+  return Promise.resolve();
 }
 
 // Load from cloud on startup
@@ -2390,6 +2403,11 @@ function doLogin(){
   const msg = document.getElementById('login-msg');
   
   initUsers();
+  // Read latest users from localStorage (most up-to-date)
+  try {
+    const local = JSON.parse(localStorage.getItem('mxp_v4')||'null');
+    if(local && local.users && local.users.length>0) DB.users = local.users;
+  } catch(e){}
   const found = (DB.users||[]).find(x=>x.user===u && x.pass===p);
   
   if(found){
@@ -2525,16 +2543,21 @@ function renderUsers(){
 function addUser(){
   if(!DB.users)DB.users=[];
   DB.users.push({user:'',pass:'',role:'cashier',name:''});
-  save();renderUsers();
+  saveNow();renderUsers();
 }
 function upUser(i,field,val){
-  DB.users[i][field]=val;save();
+  DB.users[i][field]=(typeof val==='string')?val.trim():val;
+  saveNow();
   if(field==='role')renderUsers();
+  // Show confirmation
+  const badge=document.getElementById('user-save-badge');
+  if(badge){ badge.textContent='✅ تم الحفظ'; badge.style.opacity='1'; setTimeout(()=>{badge.style.opacity='0';},1500); }
 }
 function delUser(i){
   if(DB.users[i].user==='admin'){alert('لا يمكن حذف حساب المدير الرئيسي');return;}
   if(DB.users.length<=1)return;
-  DB.users.splice(i,1);save();renderUsers();
+  if(!confirm('هل تريد حذف هذا المستخدم؟'))return;
+  DB.users.splice(i,1);saveNow();renderUsers();
 }
 
 // ══════════ SMART ALERT (التنبيه الذكي) ══════════
