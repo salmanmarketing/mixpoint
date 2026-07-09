@@ -958,18 +958,12 @@ function safeCloudWrite(){
   if(!fbReady) return Promise.resolve();
   _cloudWriteInProgress = true;
   showCloudStatus('جاري الحفظ...');
-  return fbDB.ref('mixpoint_data').once('value').then(snap=>{
-    const cloud = snap.val();
-    // ادمج بياناتنا المحلية مع السحابة (لا نفقد شيء من الطرفين)
-    DB = mergeData(cloud, DB);
-    localStorage.setItem('mxp_v4', JSON.stringify(DB));
-    return fbDB.ref('mixpoint_data').set(DB);
-  }).then(()=>{
+  // الجهاز الحالي هو المصدر: اكتب مباشرة (لا تقرأ القديم)
+  return fbDB.ref('mixpoint_data').set(DB).then(()=>{
     _cloudWriteInProgress = false;
     showCloudStatus('✅ محفوظ');
   }).catch(e=>{
     _cloudWriteInProgress = false;
-    console.warn('Cloud save failed',e);
     showCloudStatus('⚠️ حفظ محلي');
   });
 }
@@ -978,51 +972,37 @@ function safeCloudWrite(){
 function loadFromCloud(){
   if(!fbReady){ initFirebase(); }
   if(!fbReady){ 
-    setTimeout(()=>{
-      if(initFirebase()){ loadFromCloud(); }
-      else { showCloudStatus('⚠️ غير متصل'); afterDataReady(); }
-    }, 1000);
+    setTimeout(()=>{ if(initFirebase()){ loadFromCloud(); } else { showCloudStatus('⚠️ غير متصل'); afterDataReady(); } }, 1000);
     return;
   }
   showCloudStatus('جاري المزامنة...');
-  
-  // هل هذه أول مرة نشغّل نسخة الاسترجاع؟
-  const justRestored = (localStorage.getItem('mxp_force_pushed') !== RESTORE_VERSION);
+  // هل عندنا بيانات محلية؟
+  const localRaw = localStorage.getItem('mxp_v4');
+  const localHasData = localRaw && JSON.parse(localRaw).purch && Object.keys(JSON.parse(localRaw).purch||{}).length>0;
   
   fbDB.ref('mixpoint_data').once('value').then(snapshot=>{
     const cloudData = snapshot.val();
-    // احفظ نسخة أمان من السحابة دائماً
     if(cloudData){ try{ localStorage.setItem('mxp_cloud_safety_'+todayStr(), JSON.stringify(cloudData)); }catch(e){} }
     
-    if(justRestored){
-      // استرجاع: بياناتنا المستعادة هي المرجع. ادمجها مع السحابة (الأكثر اكتمالاً يفوز)
-      // ثم افرضها على السحابة
-      const freshUsers = JSON.parse(JSON.stringify(DB.users)); // احفظ المستخدم الجديد
-      DB = mergeData(cloudData, DB);
-      dedupeAll();
-      DB.users = freshUsers; // افرض المستخدم الجديد (لا تدمج القديم من السحابة)
-      localStorage.setItem('mxp_v4', JSON.stringify(DB));
-      localStorage.setItem('mxp_force_pushed', RESTORE_VERSION);
-      return fbDB.ref('mixpoint_data').set(DB).then(()=>{
-        showCloudStatus('✅ تم الاسترجاع');
-        afterDataReady();
-        startLiveSync();
-      });
-    } else if(cloudData){
-      DB = mergeData(cloudData, DB);
+    if(localHasData){
+      // عندنا بيانات محلية = هي المصدر. ادفعها للسحابة (لا تجيب القديم)
+      DB = JSON.parse(localRaw);
+      ensureIds(DB);
       localStorage.setItem('mxp_v4', JSON.stringify(DB));
       fbDB.ref('mixpoint_data').set(DB);
       showCloudStatus('✅ متزامن');
-      afterDataReady();
-      startLiveSync();
+    } else if(cloudData){
+      // ما عندنا محلي، خذ من السحابة
+      DB = cloudData;
+      ensureIds(DB);
+      localStorage.setItem('mxp_v4', JSON.stringify(DB));
+      showCloudStatus('✅ متزامن');
     } else {
       fbDB.ref('mixpoint_data').set(DB);
       showCloudStatus('✅ تم الرفع');
-      afterDataReady();
-      startLiveSync();
     }
+    afterDataReady();
   }).catch(e=>{
-    console.warn('Cloud load failed',e);
     showCloudStatus('⚠️ غير متصل');
     afterDataReady();
   });
@@ -1030,28 +1010,7 @@ function loadFromCloud(){
 
 // الاستماع اللحظي: أي تغيير من أي جهاز يظهر فوراً (بدون كتابة فوق)
 let _liveSyncOn = false;
-function startLiveSync(){
-  if(!fbReady || _liveSyncOn) return;
-  _liveSyncOn = true;
-  fbDB.ref('mixpoint_data').on('value', snap=>{
-    if(_cloudWriteInProgress) return; // تجاهل التحديثات أثناء كتابتنا
-    const cloud = snap.val();
-    if(!cloud) return;
-    // ادمج التحديث الوارد مع بياناتنا (بدون فقدان)
-    const merged = mergeData(cloud, DB);
-    // فقط حدّث إذا في اختلاف فعلي
-    if(JSON.stringify(merged) !== JSON.stringify(DB)){
-      DB = merged;
-      localStorage.setItem('mxp_v4', JSON.stringify(DB));
-      // أعد رسم الصفحة الحالية
-      const active = document.querySelector('.page.active');
-      if(active){
-        const pid = active.id.replace('page-','');
-        ({dash:renderDash,daily:renderDaily,kashf:renderKashf,purch:renderPurch,sal:renderSal,report:renderReport,purchreport:renderPurchReport,compare:renderCompare,audit:renderAudit,users:renderUsers})[pid]?.();
-      }
-    }
-  });
-}
+function startLiveSync(){ /* معطّل: يمنع رجوع البيانات القديمة */ }
 
 function afterDataReady(){
   initUsers();
@@ -1460,10 +1419,11 @@ function upPid(ym,id,f,v){
 }
 function delPid(ym,id){
   if(!DB.purch[ym])return;
-  const r=DB.purch[ym].find(x=>x._id===id);
-  if(!r)return;
+  const i=DB.purch[ym].findIndex(x=>x._id===id);
+  if(i<0)return;
+  const r=DB.purch[ym][i];
   if(!confirm('حذف هذه الفاتورة؟\n'+(r.note||'')+' - '+(r.amount||'')+' ريال'))return;
-  r._del=true; r._ts=Date.now();
+  DB.purch[ym].splice(i,1);
   save(); renderPurch();
 }
 function delP(ym,i){const r=DB.purch[ym][i];if(r){r._del=true;r._ts=Date.now();if(!r._id)r._id=genId();}save();renderPurch();}
@@ -1517,10 +1477,10 @@ function delDraw(ym,ei,di){const d=DB.sal[ym][ei].draws[di];if(d){d._del=true;d.
 function findEmp(ym,eid){ return (DB.sal[ym]||[]).find(e=>e._id===eid); }
 function upEmpNameId(ym,eid,v){const e=findEmp(ym,eid);if(!e)return;e.name=v;e._ts=Date.now();save();}
 function upEmpSalId(ym,eid,v){const e=findEmp(ym,eid);if(!e)return;e.salary=v;e._ts=Date.now();save();}
-function delEmpId(ym,eid){const e=findEmp(ym,eid);if(!e)return;if(!confirm('حذف الموظف: '+(e.name||'بدون اسم')+'؟'))return;e._del=true;e._ts=Date.now();save();renderSal();}
+function delEmpId(ym,eid){const i=(DB.sal[ym]||[]).findIndex(e=>e._id===eid);if(i<0)return;const e=DB.sal[ym][i];if(!confirm('حذف الموظف: '+(e.name||'بدون اسم')+'؟'))return;DB.sal[ym].splice(i,1);save();renderSal();}
 function addDrawId(ym,eid){const e=findEmp(ym,eid);if(!e)return;if(!e.draws)e.draws=[];e.draws.push({amount:'',date:'',note:'',_id:genId(),_ts:Date.now()});save();renderSal();}
 function upDrawId(ym,eid,did,f,v){const e=findEmp(ym,eid);if(!e||!e.draws)return;const d=e.draws.find(x=>x._id===did);if(!d)return;d[f]=v;d._ts=Date.now();save();}
-function delDrawId(ym,eid,did){const e=findEmp(ym,eid);if(!e||!e.draws)return;const d=e.draws.find(x=>x._id===did);if(!d)return;d._del=true;d._ts=Date.now();save();renderSal();}
+function delDrawId(ym,eid,did){const e=findEmp(ym,eid);if(!e||!e.draws)return;const i=e.draws.findIndex(x=>x._id===did);if(i<0)return;e.draws.splice(i,1);save();renderSal();}
 
 
 // ══════════ PURCHASES REPORT (تحليل ذكي) ══════════
