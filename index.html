@@ -858,7 +858,7 @@ function dedupeAll(){
 function mergeData(a, b){
   a = ensureIds(JSON.parse(JSON.stringify(a||{daily:{},purch:{},sal:{},ke:{},carried:{},users:[]})));
   b = ensureIds(JSON.parse(JSON.stringify(b||{daily:{},purch:{},sal:{},ke:{},carried:{},users:[]})));
-  const result = {daily:{},purch:{},sal:{},ke:{},carried:{},users:[]};
+  const result = {daily:{},purch:{},sal:{},ke:{},carried:{},users:[],_salInit:{...(a._salInit||{}),...(b._salInit||{})}};
   
   // Daily: ادمج كل الأيام، وعند نفس اليوم خذ الأحدث (بـ _ts) أو الأكثر امتلاءً
   const allDays = new Set([...Object.keys(a.daily||{}), ...Object.keys(b.daily||{})]);
@@ -1478,9 +1478,11 @@ function prevYM(ym){
 function renderSal(){
   const{y,m,ym}=getYM('s');
   if(!DB.sal)DB.sal={};
-  // إذا الشهر فاضي، انسخ الموظفين (الاسم + الراتب) من آخر شهر فيه موظفين
-  if(!DB.sal[ym] || DB.sal[ym].filter(e=>!e._del).length===0){
-    // ابحث للخلف عن آخر شهر فيه موظفين (حتى لو مو الشهر السابق مباشرة)
+  // النسخ التلقائي: مرة واحدة فقط عند أول فتح للشهر (لا يتكرر بعد الحذف)
+  if(!DB._salInit) DB._salInit = {};
+  if(!DB.sal[ym]) DB.sal[ym] = [];
+  if(!DB._salInit[ym] && DB.sal[ym].filter(e=>!e._del).length===0){
+    // ابحث للخلف عن آخر شهر فيه موظفين
     let searchYM = ym;
     let foundEmps = null;
     for(let back=0; back<12; back++){
@@ -1490,10 +1492,9 @@ function renderSal(){
     }
     if(foundEmps){
       DB.sal[ym]=foundEmps.map(e=>({name:e.name,salary:e.salary||'',draws:[],_id:genId(),_ts:Date.now()}));
-      save();
-    } else {
-      DB.sal[ym]=DB.sal[ym]||[];
     }
+    DB._salInit[ym] = true;  // علّم أن الشهر تمّت تهيئته (لا تنسخ ثانية)
+    save();
   }
   // تأكد أن كل موظف له معرّف فريد
   DB.sal[ym].forEach(e=>{ if(!e._id) e._id=genId(); (e.draws||[]).forEach(d=>{ if(!d._id) d._id=genId(); }); });
